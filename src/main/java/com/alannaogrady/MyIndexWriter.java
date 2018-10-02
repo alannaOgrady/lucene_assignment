@@ -1,6 +1,8 @@
 package com.alannaogrady;
 // java.io.BufferedReader;
 import java.io.IOException;
+//import java.nio.file.Path;
+import java.nio.file.Paths;
 //import java.io.InputStreamReader;
 //import java.nio.charset.StandardCharsets;
 
@@ -15,11 +17,13 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.store.FSDirectory;
+//import org.apache.lucene.store.RAMDirectory;
 
 public class MyIndexWriter 
 {
     private static MyIndexWriter instance = null;
+    private String indexPath = "../luceneAssignment/indexes/";
 
     private MyIndexWriter() {
       // Exists only to defeat instantiation.
@@ -38,7 +42,8 @@ public class MyIndexWriter
         StandardAnalyzer analyzer = new StandardAnalyzer();
 
         // 1. create the index - not saved to disc.. just temporary
-        Directory index = new RAMDirectory();
+        //Directory index = new RAMDirectory();
+        Directory index = FSDirectory.open(Paths.get(indexPath));
 
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
 
