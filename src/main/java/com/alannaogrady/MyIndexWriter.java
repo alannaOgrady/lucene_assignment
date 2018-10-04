@@ -25,6 +25,13 @@ public class MyIndexWriter
     private static MyIndexWriter instance = null;
     private String indexPath = "../luceneAssignment/indexes/";
 
+    private String identity = "";
+    private String title = "";
+    private String author = "";
+    private String source = "";
+    private String content = "";
+    private Boolean firstRun = true;
+
     private MyIndexWriter() {
       // Exists only to defeat instantiation.
     }
@@ -59,94 +66,95 @@ public class MyIndexWriter
 
     }
 
-    private void readTheFile() throws FileNotFoundException, IOException {
+    private void readTheFile() throws IOException {
         File file = new File("../luceneAssignment/src/main/java/com/alannaogrady/fruit.txt");
         BufferedReader br = new BufferedReader(new FileReader(file));
         String str = "";
         String tag = "";
         String prevTag = "";
-        String appendedString = "";
+
+
         StringBuilder stringBuilder = new StringBuilder();
         while ((str = br.readLine()) != null){
             tag = str.length() < 2 ? str : str.substring(0, 2);
             
             //does beginning of line start with a tag
             if (tag.equals(".I") || tag.equals(".T") || tag.equals(".A") || tag.equals(".B") || tag.equals(".W")) {
-                //remove tage from the rest of the string
-                if (str.length() > 2) {
-                    str = str.substring(2);
-                }
-                //check what the previous tag was as the string we have been collecting belongs to this
-                appendedString = stringBuilder.toString();
-                if (prevTag.equals(".I")) {
-                    //put subsequent info you have gathered into identity field
-                    System.out.println("ID " + appendedString);
-                    stringBuilder.setLength(0);
-                }
-                else if (prevTag.equals(".T")) {
-                    //put subsequent info you have gathered into title field
-                    System.out.println("Title " + appendedString);
-                    stringBuilder.setLength(0);
-                }
-                else if (prevTag.equals(".A")) {
-                    //put subsequent info you have gathered into author field
-                    System.out.println("Author " + appendedString);
-                    stringBuilder.setLength(0);
-                }
-                else if (prevTag.equals(".B")) {
-                    //put subsequent info you have gathered into bibliography field
-                    System.out.println("Biblio " + appendedString);
-                    stringBuilder.setLength(0);
-                }
-                else if (prevTag.equals(".W")) {
-                    //put into content field
-                    System.out.println("Content " + appendedString);
-                    stringBuilder.setLength(0);
-                }
-                else {
-                    //must check the rest of the line that the tag is on
-                    stringBuilder = stringBuilder.append(str);
-                }
+
+                //remove tag from the rest of the string
+                str = str.substring(2);
+                //check the previuos tag and add the appeded string as its value
+                checkPrevTag(prevTag, stringBuilder);
+                
+                //must append the rest of the line that the tag is on
+                stringBuilder = stringBuilder.append(str + " ");
 
                 //update prevTag
                 prevTag = tag;
             }
             else {
-                //not the tag, the value of the tag
-                stringBuilder = stringBuilder.append(str);
+                //not the tag, therefore must append this line to the string (value of tag)
+                stringBuilder = stringBuilder.append(str + " ");
             }
             
         }
         //must deal with last section
-        checkPrevTag(prevTag, stringBuilder, stringBuilder.toString());
+        //must check what the last tag was
+        checkPrevTag(prevTag, stringBuilder);
+        //have finished reading in file must deal with last document
+        //call add doc with doc info
+        System.out.println("Document " + identity);
+        System.out.println("ID " + identity);
+        System.out.println("Title " + title);
+        System.out.println("Author " + author);
+        System.out.println("Source " + source);
+        System.out.println("Content " + content);
+        //reinitialise
+        identity = title = author = source = content = "";
     }
 
-    private void checkPrevTag(String prevTag, StringBuilder stringBuilder, String appendedString) {
+    private void checkPrevTag(String prevTag, StringBuilder stringBuilder) {
+        //check what the previous tag was as the string we have been collecting belongs to this
+        String appendedString = stringBuilder.toString();
         if (prevTag.equals(".I")) {
-                    //put subsequent info you have gathered into identity field
-                    System.out.println("ID " + appendedString);
-                    stringBuilder.setLength(0);
-                }
-                else if (prevTag.equals(".T")) {
-                    //put subsequent info you have gathered into title field
-                    System.out.println("Title " + appendedString);
-                    stringBuilder.setLength(0);
-                }
-                else if (prevTag.equals(".A")) {
-                    //put subsequent info you have gathered into author field
-                    System.out.println("Author " + appendedString);
-                    stringBuilder.setLength(0);
-                }
-                else if (prevTag.equals(".B")) {
-                    //put subsequent info you have gathered into bibliography field
-                    System.out.println("Biblio " + appendedString);
-                    stringBuilder.setLength(0);
-                }
-                else if (prevTag.equals(".W")) {
-                    //put into content field
-                    System.out.println("Content " + appendedString);
-                    stringBuilder.setLength(0);
-                }
+            //we are on a new document add/print/whatever prev doc
+            if (!firstRun) {
+                //call add doc with doc info
+                System.out.println("Document " + identity);
+                System.out.println("ID " + identity);
+                System.out.println("Title " + title);
+                System.out.println("Author " + author);
+                System.out.println("Source " + source);
+                System.out.println("Content " + content);
+                //reinitialise
+                identity = title = author = source = content = "";
+                
+            }
+            firstRun = false;
+            //put subsequent info you have gathered into identity field
+            identity +=  " " + appendedString;
+            stringBuilder.setLength(0);
+        }
+        else if (prevTag.equals(".T")) {
+            //put subsequent info you have gathered into title field
+            title +=  " " +  appendedString;
+            stringBuilder.setLength(0);
+        }
+        else if (prevTag.equals(".A")) {
+            //put subsequent info you have gathered into author field
+            author +=  " " +  appendedString;
+            stringBuilder.setLength(0);
+        }
+        else if (prevTag.equals(".B")) {
+            //put subsequent info you have gathered into bibliography field
+            source +=  " " +  appendedString;
+            stringBuilder.setLength(0);
+        }
+        else if (prevTag.equals(".W")) {
+            //put into content field
+            content +=  " " +  appendedString;
+            stringBuilder.setLength(0);
+        }
     }
 
    
