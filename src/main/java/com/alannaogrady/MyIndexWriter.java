@@ -1,9 +1,9 @@
 package com.alannaogrady;
-// java.io.BufferedReader;
-import java.io.IOException;
-//import java.nio.file.Path;
+
+import java.io.*;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-//import java.io.InputStreamReader;
+import java.io.InputStreamReader;
 //import java.nio.charset.StandardCharsets;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -39,6 +39,7 @@ public class MyIndexWriter
     public Directory index() throws IOException, ParseException {
         // 0. Specify the analyzer for tokenizing text.
         //    The same analyzer should be used for indexing and searching
+        readTheFile();
         StandardAnalyzer analyzer = new StandardAnalyzer();
 
         // 1. create the index - not saved to disc.. just temporary
@@ -56,6 +57,96 @@ public class MyIndexWriter
 
         return index;
 
+    }
+
+    private void readTheFile() throws FileNotFoundException, IOException {
+        File file = new File("../luceneAssignment/src/main/java/com/alannaogrady/fruit.txt");
+        BufferedReader br = new BufferedReader(new FileReader(file));
+        String str = "";
+        String tag = "";
+        String prevTag = "";
+        String appendedString = "";
+        StringBuilder stringBuilder = new StringBuilder();
+        while ((str = br.readLine()) != null){
+            tag = str.length() < 2 ? str : str.substring(0, 2);
+            
+            //does beginning of line start with a tag
+            if (tag.equals(".I") || tag.equals(".T") || tag.equals(".A") || tag.equals(".B") || tag.equals(".W")) {
+                //remove tage from the rest of the string
+                if (str.length() > 2) {
+                    str = str.substring(2);
+                }
+                //check what the previous tag was as the string we have been collecting belongs to this
+                appendedString = stringBuilder.toString();
+                if (prevTag.equals(".I")) {
+                    //put subsequent info you have gathered into identity field
+                    System.out.println("ID " + appendedString);
+                    stringBuilder.setLength(0);
+                }
+                else if (prevTag.equals(".T")) {
+                    //put subsequent info you have gathered into title field
+                    System.out.println("Title " + appendedString);
+                    stringBuilder.setLength(0);
+                }
+                else if (prevTag.equals(".A")) {
+                    //put subsequent info you have gathered into author field
+                    System.out.println("Author " + appendedString);
+                    stringBuilder.setLength(0);
+                }
+                else if (prevTag.equals(".B")) {
+                    //put subsequent info you have gathered into bibliography field
+                    System.out.println("Biblio " + appendedString);
+                    stringBuilder.setLength(0);
+                }
+                else if (prevTag.equals(".W")) {
+                    //put into content field
+                    System.out.println("Content " + appendedString);
+                    stringBuilder.setLength(0);
+                }
+                else {
+                    //must check the rest of the line that the tag is on
+                    stringBuilder = stringBuilder.append(str);
+                }
+
+                //update prevTag
+                prevTag = tag;
+            }
+            else {
+                //not the tag, the value of the tag
+                stringBuilder = stringBuilder.append(str);
+            }
+            
+        }
+        //must deal with last section
+        checkPrevTag(prevTag, stringBuilder, stringBuilder.toString());
+    }
+
+    private void checkPrevTag(String prevTag, StringBuilder stringBuilder, String appendedString) {
+        if (prevTag.equals(".I")) {
+                    //put subsequent info you have gathered into identity field
+                    System.out.println("ID " + appendedString);
+                    stringBuilder.setLength(0);
+                }
+                else if (prevTag.equals(".T")) {
+                    //put subsequent info you have gathered into title field
+                    System.out.println("Title " + appendedString);
+                    stringBuilder.setLength(0);
+                }
+                else if (prevTag.equals(".A")) {
+                    //put subsequent info you have gathered into author field
+                    System.out.println("Author " + appendedString);
+                    stringBuilder.setLength(0);
+                }
+                else if (prevTag.equals(".B")) {
+                    //put subsequent info you have gathered into bibliography field
+                    System.out.println("Biblio " + appendedString);
+                    stringBuilder.setLength(0);
+                }
+                else if (prevTag.equals(".W")) {
+                    //put into content field
+                    System.out.println("Content " + appendedString);
+                    stringBuilder.setLength(0);
+                }
     }
 
    
