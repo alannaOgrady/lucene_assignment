@@ -16,6 +16,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 //import org.apache.lucene.store.RAMDirectory;
@@ -46,7 +47,7 @@ public class MyIndexWriter
     public Directory index() throws IOException, ParseException {
         // 0. Specify the analyzer for tokenizing text.
         //    The same analyzer should be used for indexing and searching
-        readTheFile();
+        //readTheFile();
         StandardAnalyzer analyzer = new StandardAnalyzer();
 
         // 1. create the index - not saved to disc.. just temporary
@@ -54,12 +55,14 @@ public class MyIndexWriter
         Directory index = FSDirectory.open(Paths.get(indexPath));
 
         IndexWriterConfig config = new IndexWriterConfig(analyzer);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        config.setSimilarity(new BM25Similarity());
 
         IndexWriter w = new IndexWriter(index, config);
-        addDoc(w, "Lucene in Action", "193398817");
-        addDoc(w, "Lucene for Dummies", "55320055Z");
-        addDoc(w, "Managing Gigabytes", "55063554A");
-        addDoc(w, "The Art of Computer Science", "9900333X");
+        addDoc(w, "Lucene in Action", "banana", "193398817");
+        addDoc(w, "Lucene for Dummies", "apple", "55320055Z");
+        addDoc(w, "Managing Gigabytes", "some structural and aerelastic considerations of high speed flight . the dominating factors in structural design of high-speed aircraft are thermal and aeroelastic in origin .  the subject matter is concerned largely with a discussion of these factors and their interrelation with one another .  a summary is presented of some of the analytical and experimental tools available to aeronautical engineers to meet the demands of high-speed flight upon aircraft structures .  the state of the art with respect to heat transfer from the boundary layer into the structure, modes of failure under combined load as well as thermal inputs and acrothermoelasticity is discussed .  methods of attacking and alleviating structural and aeroelastic problems of high-speed flight are summarized .  finally, some avenues of fundamental research are suggested .", "55063554A");
+        addDoc(w, "The Art of Computer Science", "pineapple", "9900333X");
         w.close();
 
         return index;
@@ -159,9 +162,10 @@ public class MyIndexWriter
 
    
 
-    private static void addDoc(IndexWriter w, String title, String isbn) throws IOException {
+    private static void addDoc(IndexWriter w, String title, String content, String isbn) throws IOException {
         Document doc = new Document();
         doc.add(new TextField("title", title, Field.Store.YES));
+        doc.add(new TextField("content", content, Field.Store.YES));
 
         // use a string field for isbn because we don't want it tokenized
         doc.add(new StringField("isbn", isbn, Field.Store.YES));
