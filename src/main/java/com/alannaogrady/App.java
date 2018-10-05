@@ -37,9 +37,16 @@ public class App
         // 0. Specify the analyzer for tokenizing text.
         //    The same analyzer should be used for indexing and searching
         StandardAnalyzer analyzer = new StandardAnalyzer();
+        MyIndexWriter iw = MyIndexWriter.getInstance();
+        MyIndexSearcher searcher = MyIndexSearcher.getInstance();
+        searcher.queryFileParser();
 
-        Directory index = MyIndexWriter.getInstance().index();
-        MyIndexSearcher.getInstance().search(index);
+        //Directory index = MyIndexWriter.getInstance().index();
+        for (int i = 0; i < 2; i++) {
+            Directory index = iw.index(i);
+            searcher.search(iw.getConfig(), index);
+        }
+        //MyIndexSearcher.getInstance().search(index);
         // 2. query
         //String querystr = args.length > 0 ? args[0] : "lucene";
         //hard coding query for now

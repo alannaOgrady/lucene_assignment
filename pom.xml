@@ -57,6 +57,13 @@
         <version>7.5.0</version>
         <scope>test</scope>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-benchmark -->
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-benchmark</artifactId>
+      <version>7.5.0</version>
+    </dependency>
+
 
 
 

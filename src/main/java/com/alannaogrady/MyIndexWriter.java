@@ -17,6 +17,8 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.similarities.BM25Similarity;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
+import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 //import org.apache.lucene.store.RAMDirectory;
@@ -32,6 +34,9 @@ public class MyIndexWriter
     private String source = "";
     private String content = "";
     private Boolean firstRun = true;
+    private IndexWriterConfig config;
+
+
 
     private MyIndexWriter() {
       // Exists only to defeat instantiation.
@@ -44,32 +49,38 @@ public class MyIndexWriter
     }
 
 
-    public Directory index() throws IOException, ParseException {
+    public Directory index(int iteration) throws IOException, ParseException {
         // 0. Specify the analyzer for tokenizing text.
         //    The same analyzer should be used for indexing and searching
-        //readTheFile();
+
         StandardAnalyzer analyzer = new StandardAnalyzer();
 
         // 1. create the index - not saved to disc.. just temporary
         //Directory index = new RAMDirectory();
         Directory index = FSDirectory.open(Paths.get(indexPath));
 
-        IndexWriterConfig config = new IndexWriterConfig(analyzer);
-        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        config.setSimilarity(new BM25Similarity());
+        config = new IndexWriterConfig(analyzer);
+        config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+        if (iteration == 0)
+            config.setSimilarity(new BM25Similarity());
+        else if (iteration == 1)
+            config.setSimilarity(new ClassicSimilarity());
 
         IndexWriter w = new IndexWriter(index, config);
-        addDoc(w, "Lucene in Action", "banana", "193398817");
-        addDoc(w, "Lucene for Dummies", "apple", "55320055Z");
-        addDoc(w, "Managing Gigabytes", "some structural and aerelastic considerations of high speed flight . the dominating factors in structural design of high-speed aircraft are thermal and aeroelastic in origin .  the subject matter is concerned largely with a discussion of these factors and their interrelation with one another .  a summary is presented of some of the analytical and experimental tools available to aeronautical engineers to meet the demands of high-speed flight upon aircraft structures .  the state of the art with respect to heat transfer from the boundary layer into the structure, modes of failure under combined load as well as thermal inputs and acrothermoelasticity is discussed .  methods of attacking and alleviating structural and aeroelastic problems of high-speed flight are summarized .  finally, some avenues of fundamental research are suggested .", "55063554A");
-        addDoc(w, "The Art of Computer Science", "pineapple", "9900333X");
+        w.deleteAll();
+        parseForDocs(w);
         w.close();
 
         return index;
 
     }
 
-    private void readTheFile() throws IOException {
+    public IndexWriterConfig getConfig() {
+        return config;
+    }
+
+
+    private void parseForDocs(IndexWriter w) throws IOException {
         File file = new File("../luceneAssignment/src/main/java/com/alannaogrady/fruit.txt");
         BufferedReader br = new BufferedReader(new FileReader(file));
         String str = "";
@@ -87,7 +98,7 @@ public class MyIndexWriter
                 //remove tag from the rest of the string
                 str = str.substring(2);
                 //check the previuos tag and add the appeded string as its value
-                checkPrevTag(prevTag, stringBuilder);
+                checkPrevTag(w, prevTag, stringBuilder);
                 
                 //must append the rest of the line that the tag is on
                 stringBuilder = stringBuilder.append(str + " ");
@@ -103,9 +114,10 @@ public class MyIndexWriter
         }
         //must deal with last section
         //must check what the last tag was
-        checkPrevTag(prevTag, stringBuilder);
+        checkPrevTag(w, prevTag, stringBuilder);
         //have finished reading in file must deal with last document
         //call add doc with doc info
+        addDoc(w, identity, title, author, source, content);
         System.out.println("Document " + identity);
         System.out.println("ID " + identity);
         System.out.println("Title " + title);
@@ -116,13 +128,14 @@ public class MyIndexWriter
         identity = title = author = source = content = "";
     }
 
-    private void checkPrevTag(String prevTag, StringBuilder stringBuilder) {
+    private void checkPrevTag(IndexWriter w, String prevTag, StringBuilder stringBuilder) throws IOException {
         //check what the previous tag was as the string we have been collecting belongs to this
         String appendedString = stringBuilder.toString();
         if (prevTag.equals(".I")) {
             //we are on a new document add/print/whatever prev doc
             if (!firstRun) {
                 //call add doc with doc info
+                addDoc(w, identity, title, author, source, content);
                 System.out.println("Document " + identity);
                 System.out.println("ID " + identity);
                 System.out.println("Title " + title);
@@ -162,13 +175,15 @@ public class MyIndexWriter
 
    
 
-    private static void addDoc(IndexWriter w, String title, String content, String isbn) throws IOException {
+    private static void addDoc(IndexWriter w, String id, String title, String author, String source, String content) throws IOException {
         Document doc = new Document();
+        doc.add(new StringField("id", id, Field.Store.YES));
         doc.add(new TextField("title", title, Field.Store.YES));
+        // use a string field for author because we don't want it tokenized
+        doc.add(new StringField("author", author, Field.Store.YES));
+        doc.add(new TextField("source", source, Field.Store.YES));
         doc.add(new TextField("content", content, Field.Store.YES));
 
-        // use a string field for isbn because we don't want it tokenized
-        doc.add(new StringField("isbn", isbn, Field.Store.YES));
         w.addDocument(doc);
     }
 }
