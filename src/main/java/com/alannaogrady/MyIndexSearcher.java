@@ -13,10 +13,7 @@ import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 
 public class MyIndexSearcher {
@@ -38,41 +35,47 @@ public class MyIndexSearcher {
     public void search(IndexWriterConfig iwConfig, Directory index) throws IOException, ParseException {
 
         StandardAnalyzer analyzer = new StandardAnalyzer();
-
-        // 2. query
-        //String querystr = args.length > 0 ? args[0] : "lucene";
-        //hard coding query for now
-        String querystr = "what similarity laws must be obeyed when constructing aeroelastic models of heated high speed aircraft .";
-
-
-        //boolean query!!!!!!!!
-        //term query!!!!!!
-        // the "title" arg specifies the default field to use
-        // when no field is explicitly specified in the query.
-        Query q = new QueryParser("content", analyzer).parse(querystr);
-
-        // 3. search
-        int hitsPerPage = 10;
         IndexReader reader = DirectoryReader.open(index);
-        IndexSearcher searcher = new IndexSearcher(reader);
-        searcher.setSimilarity(iwConfig.getSimilarity());
-        //searcher.setSimilarity(new BM25Similarity());
-        TopDocs docs = searcher.search(q, hitsPerPage);
-        //TopDocs docs = searcher.search(booleanQuery.build(), hitsPerPage);
-        ScoreDoc[] hits = docs.scoreDocs;   //returns an array of retrieved documents
 
-        // 4. display results
-        System.out.println("Found " + hits.length + " hits.");
-        for (int i = 0; i < hits.length; ++i) {
-            int docId = hits[i].doc;
-            Document d = searcher.doc(docId);
-            //getting the bm25 score
+        //query
+        for (int j = 0; j < 1; j++) {
+            String querystr = queries.get(j).getQuery();
+
+
+            //boolean query!!!!!!!!
+            //term query!!!!!!
+            Query q = new QueryParser("content", analyzer).parse(querystr);
+
+            // 3. search
+            int hitsPerPage = 10;
+
+            IndexSearcher searcher = new IndexSearcher(reader);
+            searcher.setSimilarity(iwConfig.getSimilarity());
+            TopDocs docs = searcher.search(q, hitsPerPage);
+            //TopDocs docs = searcher.search(booleanQuery.build(), hitsPerPage);
+            ScoreDoc[] hits = docs.scoreDocs;   //returns an array of retrieved documents
+
+            String fileName = "trec_res_" + iwConfig.getSimilarity().toString();
+            BufferedWriter writer = new BufferedWriter(new FileWriter("../lucene_assignment/results/" + fileName));
+
+            // 4. display results
+            System.out.println("Found " + hits.length + " hits.\t" + iwConfig.getSimilarity().toString());
+            for (int i = 0; i < hits.length; ++i) {
+                int docId = hits[i].doc;
+                Document d = searcher.doc(docId);
+                //getting the bm25 score
 //            Explanation explain = searcher.explain(q, docId);
 //            float score = explain.getValue();
-            float score = hits[i].score;
+                float score = hits[i].score;
 
 
-            System.out.println((i + 1) + ". " + "\t" + d.get("title") + "\t" + score);
+                System.out.println((i + 1) + ". " + "\t" + d.get("title") + "\tDocument ID: " + d.get("id") + "\t" + score);
+                //write to a results file
+                String results = queries.get(j).getQueryId() + " Q0 " + d.get("id") + " " + (i + 1) + " " + score + " exp\n";
+                writer.write(results);
+
+            }
+            writer.close();
         }
 
         // reader can only be closed when there
@@ -80,8 +83,9 @@ public class MyIndexSearcher {
         reader.close();
     }
 
+
     public void queryFileParser() throws IOException {
-        File file = new File("../luceneAssignment/src/main/java/com/alannaogrady/cran.qry");
+        File file = new File("../lucene_assignment/src/main/java/com/alannaogrady/cran.qry");
         BufferedReader br = new BufferedReader(new FileReader(file));
         String str = "";
         String tag = "";
@@ -102,14 +106,14 @@ public class MyIndexSearcher {
 
                 //remove tag from the rest of the string
                 str = str.substring(2);
-                //check the previous tag and add the appeded string as its value
+                //check the previous tag and add the appended string as its value
                 //checkPrevTag(prevTag, stringBuilder);
                 if (prevTag.equals(".I")) {
                     if (!firstRun) {
                         //do stuff with data gathered from previous document
                         queries.add(new IndexQuery(queryId, queryWords));
-                        System.out.println("Query ID " + queryId);
-                        System.out.println("Query " + queryWords);
+                        //System.out.println("Query ID " + queryId);
+                        //System.out.println("Query " + queryWords);
                         //reinitialise
                         queryId = -1;
                         queryWords = "";
@@ -141,7 +145,6 @@ public class MyIndexSearcher {
         }
         //must deal with last section
         //must check what the last tag was
-        //checkPrevTag(prevTag, stringBuilder);
         if (prevTag.equals(".I")) {
             appendedString = appendedString.replaceAll(" ","");
             queryId = Integer.parseInt(appendedString);
@@ -152,8 +155,8 @@ public class MyIndexSearcher {
             stringBuilder.setLength(0);
         }
         //do stuff with data gathered from previous document
-        System.out.println("Query ID " + queryId);
-        System.out.println("Query " + queryWords);
+        //System.out.println("Query ID " + queryId);
+        //System.out.println("Query " + queryWords);
         queries.add(new IndexQuery(queryId, queryWords));
         //reinitialise
         queryId = -1;

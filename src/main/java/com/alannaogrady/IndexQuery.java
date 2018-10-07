@@ -10,4 +10,12 @@ public class IndexQuery {
         IndexQuery = query;
     }
 
+    public int getQueryId() {
+        return queryNum;
+    }
+
+    public String getQuery() {
+        return IndexQuery;
+    }
+
 }
