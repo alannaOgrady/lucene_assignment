@@ -7,6 +7,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
+import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.similarities.Similarity;
@@ -32,19 +35,26 @@ public class MyIndexSearcher {
         return instance;
     }
 
-    public void search(IndexWriterConfig iwConfig, Directory index) throws IOException, ParseException {
+    public void search(IndexWriterConfig iwConfig, Directory index, BufferedWriter writer) throws IOException, QueryNodeException {
 
         StandardAnalyzer analyzer = new StandardAnalyzer();
         IndexReader reader = DirectoryReader.open(index);
 
         //query
-        for (int j = 0; j < 1; j++) {
+        for (int j = 0; j < queries.size(); j++) {
             String querystr = queries.get(j).getQuery();
+//            String querystr = "what is the available information pertaining to boundary layers on very\n" +
+//                    "slender bodies of revolution in continuum flow (the ?transverse\n" +
+//                    "curvature  effect) .";
 
 
             //boolean query!!!!!!!!
             //term query!!!!!!
-            Query q = new QueryParser("content", analyzer).parse(querystr);
+            //Query q = new QueryParser("content", analyzer).parse(querystr);
+            StandardQueryParser parser = new StandardQueryParser(analyzer);
+            parser.setAllowLeadingWildcard(true);
+            parser.setEnablePositionIncrements(true);
+            Query q = parser.parse(querystr, "content");
 
             // 3. search
             int hitsPerPage = 10;
@@ -52,11 +62,15 @@ public class MyIndexSearcher {
             IndexSearcher searcher = new IndexSearcher(reader);
             searcher.setSimilarity(iwConfig.getSimilarity());
             TopDocs docs = searcher.search(q, hitsPerPage);
-            //TopDocs docs = searcher.search(booleanQuery.build(), hitsPerPage);
+            //to get all retrieved docs
+//            TotalHitCountCollector collector = new TotalHitCountCollector();
+//            searcher.search(q, collector);
+//            //use 1 if there is 0 hits
+//            TopDocs docs = searcher.search(q, Math.max(1, collector.getTotalHits()));
             ScoreDoc[] hits = docs.scoreDocs;   //returns an array of retrieved documents
 
-            String fileName = "trec_res_" + iwConfig.getSimilarity().toString();
-            BufferedWriter writer = new BufferedWriter(new FileWriter("../lucene_assignment/results/" + fileName));
+//            String fileName = "trec_res_" + iwConfig.getSimilarity().toString();
+//            BufferedWriter writer = new BufferedWriter(new FileWriter("../lucene_assignment/results/" + fileName));
 
             // 4. display results
             System.out.println("Found " + hits.length + " hits.\t" + iwConfig.getSimilarity().toString());
@@ -75,7 +89,7 @@ public class MyIndexSearcher {
                 writer.write(results);
 
             }
-            writer.close();
+            //writer.close();
         }
 
         // reader can only be closed when there
