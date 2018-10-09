@@ -6,6 +6,9 @@ import java.nio.file.Paths;
 import java.io.InputStreamReader;
 //import java.nio.charset.StandardCharsets;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -37,6 +40,7 @@ public class MyIndexWriter
     private String content = "";
     private Boolean firstRun = true;
     private IndexWriterConfig config;
+    public int docs_created = 0;
 
 
 
@@ -51,11 +55,11 @@ public class MyIndexWriter
     }
 
 
-    public Directory index(int iteration) throws IOException, ParseException {
+    public Directory index(int iteration, Analyzer analyzer) throws IOException, ParseException {
         // 0. Specify the analyzer for tokenizing text.
         //    The same analyzer should be used for indexing and searching
 
-        StandardAnalyzer analyzer = new StandardAnalyzer();
+        //StandardAnalyzer analyzer = new StandardAnalyzer();
 
         // 1. create the index - not saved to disc.. just temporary
         //Directory index = new RAMDirectory();
@@ -110,6 +114,7 @@ public class MyIndexWriter
 
 
     private void parseForDocs(IndexWriter w) throws IOException {
+        //File file = new File("../lucene_assignment/src/main/java/com/alannaogrady/cran.all.1400");
         File file = new File("../lucene_assignment/src/main/java/com/alannaogrady/cran.all.1400");
         BufferedReader br = new BufferedReader(new FileReader(file));
         String str;
@@ -146,7 +151,8 @@ public class MyIndexWriter
         checkPrevTag(w, prevTag, stringBuilder);
         //have finished reading in file must deal with last document
         //call add doc with doc info
-        addDoc(w, identity, title, author, source, content);
+        if (!identity.equals("") || !title.equals("") || !author.equals("") || !source.equals("") ||!content.equals(""))
+            addDoc(w, identity, title, author, source, content);
 //        System.out.println("Document " + identity);
 //        System.out.println("ID " + identity);
 //        System.out.println("Title " + title);
@@ -164,7 +170,8 @@ public class MyIndexWriter
             //we are on a new document add/print/whatever prev doc
             if (!firstRun) {
                 //call add doc with doc info
-                addDoc(w, identity, title, author, source, content);
+                if (!identity.equals("") || !title.equals("") || !author.equals("") || !source.equals("") ||!content.equals(""))
+                    addDoc(w, identity, title, author, source, content);
 //                System.out.println("Document " + identity);
 //                System.out.println("ID " + identity);
 //                System.out.println("Title " + title);
@@ -204,15 +211,16 @@ public class MyIndexWriter
 
    
 
-    private static void addDoc(IndexWriter w, String id, String title, String author, String source, String content) throws IOException {
+    private void addDoc(IndexWriter w, String id, String title, String author, String source, String content) throws IOException {
         Document doc = new Document();
         doc.add(new StringField("id", id, Field.Store.YES));
         doc.add(new TextField("title", title, Field.Store.YES));
         // use a string field for author because we don't want it tokenized
-        doc.add(new StringField("author", author, Field.Store.YES));
-        doc.add(new TextField("source", source, Field.Store.YES));
+        //doc.add(new StringField("author", author, Field.Store.YES));
+        //doc.add(new TextField("source", source, Field.Store.YES));
         doc.add(new TextField("content", content, Field.Store.YES));
 
         w.addDocument(doc);
+        docs_created++;
     }
 }

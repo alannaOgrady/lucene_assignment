@@ -1,10 +1,14 @@
 package com.alannaogrady;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
@@ -18,12 +22,15 @@ import org.apache.lucene.store.Directory;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MyIndexSearcher {
 
 
     private static MyIndexSearcher instance = null;
     private ArrayList<IndexQuery> queries = new ArrayList<>();
+    public int num = 0;
 
     private MyIndexSearcher() {
         // Exists only to defeat instantiation.
@@ -35,29 +42,30 @@ public class MyIndexSearcher {
         return instance;
     }
 
-    public void search(IndexWriterConfig iwConfig, Directory index, BufferedWriter writer) throws IOException, QueryNodeException {
+    public void search(IndexWriterConfig iwConfig, Directory index, BufferedWriter writer, Analyzer analyzer) throws IOException, ParseException, QueryNodeException {
 
-        StandardAnalyzer analyzer = new StandardAnalyzer();
+        //StandardAnalyzer analyzer = new StandardAnalyzer();
+
         IndexReader reader = DirectoryReader.open(index);
 
         //query
         for (int j = 0; j < queries.size(); j++) {
-            String querystr = queries.get(j).getQuery();
-//            String querystr = "what is the available information pertaining to boundary layers on very\n" +
-//                    "slender bodies of revolution in continuum flow (the ?transverse\n" +
-//                    "curvature  effect) .";
-
 
             //boolean query!!!!!!!!
             //term query!!!!!!
-            //Query q = new QueryParser("content", analyzer).parse(querystr);
-            StandardQueryParser parser = new StandardQueryParser(analyzer);
-            parser.setAllowLeadingWildcard(true);
-            parser.setEnablePositionIncrements(true);
-            Query q = parser.parse(querystr, "content");
+            //QueryParser parser = new QueryParser("content", analyzer);
+            Map<String, Float> boostMap = new HashMap<String, Float>();
+            boostMap.put("title", 1.2f);
+            MultiFieldQueryParser parser = new MultiFieldQueryParser(new String[]{"content", "title"}, analyzer);
+            String querystr = parser.escape(queries.get(j).getQuery());
+            Query q = parser.parse(querystr);
+//            StandardQueryParser parser = new StandardQueryParser(analyzer);
+//            parser.setAllowLeadingWildcard(true);
+//            parser.setEnablePositionIncrements(true);
+//            Query q = parser.parse(querystr, "content");
 
             // 3. search
-            int hitsPerPage = 10;
+            int hitsPerPage = 30;
 
             IndexSearcher searcher = new IndexSearcher(reader);
             searcher.setSimilarity(iwConfig.getSimilarity());
@@ -68,9 +76,8 @@ public class MyIndexSearcher {
 //            //use 1 if there is 0 hits
 //            TopDocs docs = searcher.search(q, Math.max(1, collector.getTotalHits()));
             ScoreDoc[] hits = docs.scoreDocs;   //returns an array of retrieved documents
+            num++;
 
-//            String fileName = "trec_res_" + iwConfig.getSimilarity().toString();
-//            BufferedWriter writer = new BufferedWriter(new FileWriter("../lucene_assignment/results/" + fileName));
 
             // 4. display results
             System.out.println("Found " + hits.length + " hits.\t" + iwConfig.getSimilarity().toString());
@@ -85,13 +92,14 @@ public class MyIndexSearcher {
 
                 System.out.println((i + 1) + ". " + "\t" + d.get("title") + "\tDocument ID: " + d.get("id") + "\t" + score);
                 //write to a results file
-                String results = queries.get(j).getQueryId() + " Q0 " + d.get("id") + " " + (i + 1) + " " + score + " exp\n";
+                String results = (j+1) + " Q0" + d.get("id") + " " + (i + 1) + " " + score + " exp\n";
                 writer.write(results);
 
             }
             //writer.close();
         }
 
+        System.out.println("num " + num);
         // reader can only be closed when there
         // is no need to access the documents any more.
         reader.close();
@@ -176,4 +184,5 @@ public class MyIndexSearcher {
         queryId = -1;
         queryWords = "";
     }
+
 }
