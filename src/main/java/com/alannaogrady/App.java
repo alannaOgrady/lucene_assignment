@@ -31,8 +31,9 @@ public class App
 
         //Directory index = MyIndexWriter.getInstance().index();
         for (int i = 0; i < 2; i++) {
-            Directory index = iw.index(i, analyzer), ana;
+            Directory index = iw.index(i, analyzer);
             String fileName = "trec_res_" + iw.getConfig().getSimilarity().toString();
+             fileName = fileName.replaceAll("\\p{P}","");
             BufferedWriter writer = new BufferedWriter(new FileWriter("../lucene_assignment/results/" + fileName));
             searcher.search(iw.getConfig(), index, writer, analyzer);
             writer.close();

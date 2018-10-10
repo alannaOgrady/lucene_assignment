@@ -54,8 +54,8 @@ public class MyIndexSearcher {
             //boolean query!!!!!!!!
             //term query!!!!!!
             //QueryParser parser = new QueryParser("content", analyzer);
-            Map<String, Float> boostMap = new HashMap<String, Float>();
-            boostMap.put("title", 1.2f);
+            //Map<String, Float> boostMap = new HashMap<String, Float>();
+            //boostMap.put("title", 1.1f);
             MultiFieldQueryParser parser = new MultiFieldQueryParser(new String[]{"content", "title"}, analyzer);
             String querystr = parser.escape(queries.get(j).getQuery());
             Query q = parser.parse(querystr);
@@ -69,12 +69,12 @@ public class MyIndexSearcher {
 
             IndexSearcher searcher = new IndexSearcher(reader);
             searcher.setSimilarity(iwConfig.getSimilarity());
-            TopDocs docs = searcher.search(q, hitsPerPage);
+            //TopDocs docs = searcher.search(q, hitsPerPage);
             //to get all retrieved docs
-//            TotalHitCountCollector collector = new TotalHitCountCollector();
-//            searcher.search(q, collector);
-//            //use 1 if there is 0 hits
-//            TopDocs docs = searcher.search(q, Math.max(1, collector.getTotalHits()));
+            TotalHitCountCollector collector = new TotalHitCountCollector();
+            searcher.search(q, collector);
+            //use 1 if there is 0 hits
+            TopDocs docs = searcher.search(q, Math.max(1, collector.getTotalHits()));
             ScoreDoc[] hits = docs.scoreDocs;   //returns an array of retrieved documents
             num++;
 
