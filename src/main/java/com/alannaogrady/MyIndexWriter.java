@@ -1,32 +1,20 @@
 package com.alannaogrady;
 
 import java.io.*;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.io.InputStreamReader;
-//import java.nio.charset.StandardCharsets;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.core.StopAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
-import org.apache.lucene.search.similarities.Similarity;
-import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.BytesRef;
-//import org.apache.lucene.store.RAMDirectory;
 
 public class MyIndexWriter 
 {
@@ -56,13 +44,7 @@ public class MyIndexWriter
 
 
     public Directory index(int iteration, Analyzer analyzer) throws IOException, ParseException {
-        // 0. Specify the analyzer for tokenizing text.
-        //    The same analyzer should be used for indexing and searching
 
-        //StandardAnalyzer analyzer = new StandardAnalyzer();
-
-        // 1. create the index - not saved to disc.. just temporary
-        //Directory index = new RAMDirectory();
         Directory index = FSDirectory.open(Paths.get(indexPath));
 
         config = new IndexWriterConfig(analyzer);
@@ -71,33 +53,6 @@ public class MyIndexWriter
             config.setSimilarity(new BM25Similarity());
         else if (iteration == 1)
             config.setSimilarity(new ClassicSimilarity());
-//        else
-//            config.setSimilarity(new TFIDFSimilarity() {
-//                @Override
-//                public float tf(float v) {
-//                    return 0;
-//                }
-//
-//                @Override
-//                public float idf(long l, long l1) {
-//                    return 0;
-//                }
-//
-//                @Override
-//                public float lengthNorm(int i) {
-//                    return 0;
-//                }
-//
-//                @Override
-//                public float sloppyFreq(int i) {
-//                    return 0;
-//                }
-//
-//                @Override
-//                public float scorePayload(int i, int i1, int i2, BytesRef bytesRef) {
-//                    return 0;
-//                }
-//            });
 
         IndexWriter w = new IndexWriter(index, config);
         w.deleteAll();
@@ -114,7 +69,6 @@ public class MyIndexWriter
 
 
     private void parseForDocs(IndexWriter w) throws IOException {
-        //File file = new File("../lucene_assignment/src/main/java/com/alannaogrady/cran.all.1400");
         File file = new File("../lucene_assignment/src/main/java/com/alannaogrady/cran.all.1400");
         BufferedReader br = new BufferedReader(new FileReader(file));
         String str;
@@ -153,12 +107,6 @@ public class MyIndexWriter
         //call add doc with doc info
         if (!identity.equals("") || !title.equals("") || !author.equals("") || !source.equals("") ||!content.equals(""))
             addDoc(w, identity, title, author, source, content);
-//        System.out.println("Document " + identity);
-//        System.out.println("ID " + identity);
-//        System.out.println("Title " + title);
-//        System.out.println("Author " + author);
-//        System.out.println("Source " + source);
-//        System.out.println("Content " + content);
         //reinitialise
         identity = title = author = source = content = "";
     }
@@ -172,12 +120,6 @@ public class MyIndexWriter
                 //call add doc with doc info
                 if (!identity.equals("") || !title.equals("") || !author.equals("") || !source.equals("") ||!content.equals(""))
                     addDoc(w, identity, title, author, source, content);
-//                System.out.println("Document " + identity);
-//                System.out.println("ID " + identity);
-//                System.out.println("Title " + title);
-//                System.out.println("Author " + author);
-//                System.out.println("Source " + source);
-//                System.out.println("Content " + content);
                 //reinitialise
                 identity = title = author = source = content = "";
                 

@@ -1,35 +1,25 @@
 package com.alannaogrady;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
-import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
-import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.search.*;
-import org.apache.lucene.search.similarities.BM25Similarity;
-import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MyIndexSearcher {
 
 
     private static MyIndexSearcher instance = null;
-    private ArrayList<IndexQuery> queries = new ArrayList<>();
+    private ArrayList<String> queries = new ArrayList<>();
     public int num = 0;
 
     private MyIndexSearcher() {
@@ -44,32 +34,19 @@ public class MyIndexSearcher {
 
     public void search(IndexWriterConfig iwConfig, Directory index, BufferedWriter writer, Analyzer analyzer) throws IOException, ParseException, QueryNodeException {
 
-        //StandardAnalyzer analyzer = new StandardAnalyzer();
-
         IndexReader reader = DirectoryReader.open(index);
 
         //query
         for (int j = 0; j < queries.size(); j++) {
 
-            //boolean query!!!!!!!!
-            //term query!!!!!!
-            //QueryParser parser = new QueryParser("content", analyzer);
-            //Map<String, Float> boostMap = new HashMap<String, Float>();
-            //boostMap.put("title", 1.1f);
             MultiFieldQueryParser parser = new MultiFieldQueryParser(new String[]{"content", "title"}, analyzer);
-            String querystr = parser.escape(queries.get(j).getQuery());
+            String querystr = parser.escape(queries.get(j));
             Query q = parser.parse(querystr);
-//            StandardQueryParser parser = new StandardQueryParser(analyzer);
-//            parser.setAllowLeadingWildcard(true);
-//            parser.setEnablePositionIncrements(true);
-//            Query q = parser.parse(querystr, "content");
 
-            // 3. search
-            int hitsPerPage = 30;
 
             IndexSearcher searcher = new IndexSearcher(reader);
             searcher.setSimilarity(iwConfig.getSimilarity());
-            //TopDocs docs = searcher.search(q, hitsPerPage);
+
             //to get all retrieved docs
             TotalHitCountCollector collector = new TotalHitCountCollector();
             searcher.search(q, collector);
@@ -84,19 +61,16 @@ public class MyIndexSearcher {
             for (int i = 0; i < hits.length; ++i) {
                 int docId = hits[i].doc;
                 Document d = searcher.doc(docId);
-                //getting the bm25 score
-//            Explanation explain = searcher.explain(q, docId);
-//            float score = explain.getValue();
+
                 float score = hits[i].score;
 
 
-                System.out.println((i + 1) + ". " + "\t" + d.get("title") + "\tDocument ID: " + d.get("id") + "\t" + score);
+                System.out.println("Query ID: " + (i + 1) + ". "  + "\tDocument ID: " + d.get("id") + "\t Score: " + score);
                 //write to a results file
                 String results = (j+1) + " Q0" + d.get("id") + " " + (i + 1) + " " + score + " exp\n";
                 writer.write(results);
 
             }
-            //writer.close();
         }
 
         System.out.println("num " + num);
@@ -112,7 +86,6 @@ public class MyIndexSearcher {
         String str = "";
         String tag = "";
         String prevTag = "";
-        int queryId = -1;
         String queryWords = "";
         Boolean firstRun = true;
         String appendedString = "";
@@ -133,16 +106,12 @@ public class MyIndexSearcher {
                 if (prevTag.equals(".I")) {
                     if (!firstRun) {
                         //do stuff with data gathered from previous document
-                        queries.add(new IndexQuery(queryId, queryWords));
-                        //System.out.println("Query ID " + queryId);
-                        //System.out.println("Query " + queryWords);
+                        queries.add(queryWords);
                         //reinitialise
-                        queryId = -1;
                         queryWords = "";
                     }
                     firstRun = false;
                     appendedString = appendedString.replaceAll(" ","");
-                    queryId = Integer.parseInt(appendedString);
                     stringBuilder.setLength(0);
                 }
                 else if (prevTag.equals(".W")) {
@@ -169,7 +138,6 @@ public class MyIndexSearcher {
         //must check what the last tag was
         if (prevTag.equals(".I")) {
             appendedString = appendedString.replaceAll(" ","");
-            queryId = Integer.parseInt(appendedString);
             stringBuilder.setLength(0);
         }
         else {
@@ -177,11 +145,8 @@ public class MyIndexSearcher {
             stringBuilder.setLength(0);
         }
         //do stuff with data gathered from previous document
-        //System.out.println("Query ID " + queryId);
-        //System.out.println("Query " + queryWords);
-        queries.add(new IndexQuery(queryId, queryWords));
+        queries.add(queryWords);
         //reinitialise
-        queryId = -1;
         queryWords = "";
     }
 
